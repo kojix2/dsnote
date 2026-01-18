@@ -538,6 +538,17 @@ list(APPEND deps_libs
     pthread
     ${CMAKE_DL_LIBS})
 
+if(APPLE)
+    find_library(coreaudio_framework CoreAudio)
+    find_library(corefoundation_framework CoreFoundation)
+    if(coreaudio_framework)
+        list(APPEND deps_libs ${coreaudio_framework})
+    endif()
+    if(corefoundation_framework)
+        list(APPEND deps_libs ${corefoundation_framework})
+    endif()
+endif()
+
 set(deps_dirs "")
 
 include(FindPkgConfig)

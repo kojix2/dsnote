@@ -12,6 +12,9 @@
 #include <pulse/context.h>
 #include <pulse/introspect.h>
 #include <pulse/mainloop.h>
+#elif defined(__APPLE__)
+#include <CoreAudio/CoreAudio.h>
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 #include <functional>
@@ -58,6 +61,12 @@ class audio_device_manager {
     static void source_info_pa_callback(pa_context *ctx,
                                         const pa_source_info *info, int eol,
                                         void *userdata);
+#elif defined(__APPLE__)
+    bool m_device_listener_registered = false;
+    void update_sources();
+    static OSStatus devices_changed_callback(
+        AudioObjectID inObjectID, UInt32 inNumberAddresses,
+        const AudioObjectPropertyAddress *inAddresses, void *inClientData);
 #endif
 };
 
