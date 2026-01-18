@@ -9,11 +9,13 @@
 
 #include <QCommandLineParser>
 #include <QDebug>
+#include <QDir>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QLocale>
 #include <QObject>
 #include <QQmlContext>
+#include <QStandardPaths>
 #include <QString>
 #include <QStringList>
 #include <QTextCodec>
@@ -523,6 +525,36 @@ int main(int argc, char* argv[]) {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
     QGuiApplication::setWindowIcon(QIcon{QStringLiteral(":/app_icon.svg")});
+#ifdef Q_OS_MACOS
+    {
+        auto paths = QIcon::themeSearchPaths();
+        paths << QStringLiteral("/opt/homebrew/share/icons")
+              << QStringLiteral("/usr/local/share/icons");
+
+        const auto generic_paths =
+            QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+        for (const auto& base : generic_paths) {
+            paths << (base + QStringLiteral("/icons"));
+        }
+        paths.removeDuplicates();
+        QIcon::setThemeSearchPaths(paths);
+
+        if (QIcon::themeName().isEmpty()) {
+            const QStringList candidates = {QStringLiteral("breeze"),
+                                             QStringLiteral("Adwaita"),
+                                             QStringLiteral("hicolor")};
+            for (const auto& theme : candidates) {
+                for (const auto& base : paths) {
+                    if (QDir(base + "/" + theme).exists()) {
+                        QIcon::setThemeName(theme);
+                        break;
+                    }
+                }
+                if (!QIcon::themeName().isEmpty()) break;
+            }
+        }
+    }
+#endif
 #endif
     QGuiApplication::setApplicationName(QStringLiteral(APP_ID));
     QGuiApplication::setOrganizationName(QStringLiteral(APP_ORG));
