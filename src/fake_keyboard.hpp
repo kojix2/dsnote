@@ -8,7 +8,9 @@
 #ifndef FAKE_KEYBOARD_HPP
 #define FAKE_KEYBOARD_HPP
 
+#if defined(__linux__)
 #include <wayland-client.h>
+#endif
 
 #include <QObject>
 #include <QString>
@@ -20,14 +22,24 @@
 #include <string>
 #include <thread>
 
-#ifdef USE_X11_FEATURES
+#if defined(__linux__) && defined(USE_X11_FEATURES)
 #include <QX11Info>
 
 struct xcb_connection_t;
+struct xdo;
+#endif
+
+#if defined(__linux__)
 struct xkb_context;
 struct xkb_keymap;
 struct xkb_compose_table;
-struct xdo;
+struct wl_display;
+struct wl_registry;
+struct wl_seat;
+struct wl_keyboard;
+struct wl_callback;
+struct wl_surface;
+struct wl_array;
 #endif
 
 class fake_keyboard : public QObject {
@@ -64,6 +76,7 @@ class fake_keyboard : public QObject {
     std::u32string m_text;
     size_t m_text_cursor = 0;
     QTimer m_delay_timer;
+#if defined(__linux__)
     int m_ydo_daemon_socket = -1;
     xkb_context* m_xkb_ctx = nullptr;
     xkb_keymap* m_xkb_keymap = nullptr;
@@ -75,7 +88,7 @@ class fake_keyboard : public QObject {
     wl_keyboard* m_wl_keyboard = nullptr;
     std::mutex m_wl_mtx;
     int m_keyboard_layout_idx = -1;
-#ifdef USE_X11_FEATURES
+#if defined(USE_X11_FEATURES)
     Display* m_x11_display = nullptr;
     xdo* m_xdo = nullptr;
     xcb_connection_t* m_xcb_conn = nullptr;
@@ -84,7 +97,9 @@ class fake_keyboard : public QObject {
     unsigned long m_focus_window = 0;
     unsigned int m_num_layouts = 0;
 #endif
+#endif
 
+#if defined(__linux__)
     static int make_ydo_socket();
 
     void init_ydo();
@@ -103,7 +118,7 @@ class fake_keyboard : public QObject {
     void connect_wayland();
     void disconnect_wayland();
     void make_compose_table(const char* compose_file);
-#ifdef USE_X11_FEATURES
+#if defined(USE_X11_FEATURES)
     void init_xdo();
     void init_legacy();
     void send_text_xdo(const QString& text);
@@ -112,6 +127,7 @@ class fake_keyboard : public QObject {
     std::vector<fake_keyboard::key_code_t> key_from_character_x11(
         /*UTF-32*/ uint32_t character);
 #endif
+#if defined(__linux__)
     static void wly_global_callback(void* data, wl_registry* registry,
                                     uint32_t id, const char* interface,
                                     uint32_t version);
@@ -147,6 +163,8 @@ class fake_keyboard : public QObject {
     inline static const wl_keyboard_listener wly_keyboard_listener{
         wly_keyboard_keymap, wly_keyboard_enter,     wly_keyboard_leave,
         wly_keyboard_key,    wly_keyboard_modifiers, wly_keyboard_repeat_info};
+#endif
+#endif
 };
 
 #endif  // FAKE_KEYBOARD_HPP

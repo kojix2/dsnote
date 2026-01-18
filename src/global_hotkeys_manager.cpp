@@ -345,6 +345,8 @@ void global_hotkeys_manager::handle_x11_activated() {
     emit hotkey_activated(action_id, {});
 }
 
+#endif  // USE_X11_FEATURES
+
 void global_hotkeys_manager::reset_portal_connection() {
     if (!is_portal_supported()) {
         LOGW("portal not supported");
@@ -355,5 +357,3 @@ void global_hotkeys_manager::reset_portal_connection() {
 
     create_portal_session(/*force_bind=*/true);
 }
-
-#endif  // USE_X11_FEATURES

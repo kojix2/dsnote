@@ -25,12 +25,16 @@ using namespace pybind11::literals;
 
 kokoro_engine::kokoro_engine(config_t config, callbacks_t call_backs)
     : tts_engine{std::move(config), std::move(call_backs)} {
+#ifdef ARCH_X86_64
     if ((cpu_tools::cpuinfo().feature_flags &
          cpu_tools::feature_flags_t::avx) == 0) {
         LOGE("avx not supported but kokoro engine needs it");
         throw std::runtime_error(
             "failed to init kokoro engine: avx not supported");
     }
+#else
+    LOGW("kokoro engine: avx check skipped on non-x86_64 architecture");
+#endif
 
     if (m_config.model_files.hub_path.empty()) {
         LOGE("hub path missing but kokoro engine needs it");

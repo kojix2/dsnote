@@ -7,6 +7,38 @@
 
 #include "audio_device_manager.hpp"
 
+#if !defined(__linux__)
+
+audio_device_manager::audio_device_manager(
+    sources_changed_cb_t sources_changed_cb)
+    : m_sources_changed_cb{sources_changed_cb} {}
+
+audio_device_manager::~audio_device_manager() = default;
+
+std::vector<audio_device_manager::device_t> audio_device_manager::sources() {
+    return {};
+}
+
+bool audio_device_manager::has_source_name(const std::string &name) {
+    (void)name;
+    return false;
+}
+
+std::optional<audio_device_manager::device_t>
+audio_device_manager::source_by_name(const std::string &name) {
+    (void)name;
+    return std::nullopt;
+}
+
+std::optional<audio_device_manager::device_t>
+audio_device_manager::source_by_description(
+    const std::string &description) {
+    (void)description;
+    return std::nullopt;
+}
+
+#else
+
 #include <pulse/context.h>
 #include <pulse/error.h>
 #include <pulse/introspect.h>
@@ -227,3 +259,5 @@ void audio_device_manager::clean() {
         m_pa_loop = nullptr;
     }
 }
+
+#endif  // !defined(__linux__)

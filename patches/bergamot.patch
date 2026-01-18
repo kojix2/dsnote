@@ -752,3 +752,128 @@ diff -ruN bergamot-org/src/translator/logging.h bergamot-patched/src/translator/
      // We are manually creating loggers, because this is usually created in marian as a side-effect of
      // config-parsing.
      for (auto &logger : marianLoggers_) {
+
+diff -ruN bergamot-org/3rd_party/marian-dev/src/3rd_party/sentencepiece/src/trainer_interface.cc bergamot-patched/3rd_party/marian-dev/src/3rd_party/sentencepiece/src/trainer_interface.cc
+--- bergamot-org/3rd_party/marian-dev/src/3rd_party/sentencepiece/src/trainer_interface.cc	2023-07-08 17:36:56.190113017 +0200
++++ bergamot-patched/3rd_party/marian-dev/src/3rd_party/sentencepiece/src/trainer_interface.cc	2026-01-18 00:00:00.000000000 +0900
+@@ -208,12 +208,12 @@
+   if (sentencepiece.empty() ||
+       sentencepiece.size() >
+           static_cast<size_t>(trainer_spec_.max_sentencepiece_length())) {
+     return false;
+   }
+ 
+-  constexpr unicode_script::ScriptType kAnyType =
+-      static_cast<unicode_script::ScriptType>(-1);
++  constexpr unicode_script::ScriptType kAnyType =
++      static_cast<unicode_script::ScriptType>(255);
+ 
+   auto is_number = [](char32 c) { return (c >= 0x30 && c <= 0x39); };
+ 
+   unicode_script::ScriptType prev_script = kAnyType;
+diff -ruN bergamot-org/3rd_party/marian-dev/src/3rd_party/zlib/zutil.h bergamot-patched/3rd_party/marian-dev/src/3rd_party/zlib/zutil.h
+--- bergamot-org/3rd_party/marian-dev/src/3rd_party/zlib/zutil.h	2023-07-08 17:36:56.190113017 +0200
++++ bergamot-patched/3rd_party/marian-dev/src/3rd_party/zlib/zutil.h	2026-01-18 00:00:00.000000000 +0900
+@@ -129,16 +129,12 @@
+ #  endif
+ #endif
+ 
+-#if defined(MACOS) || defined(TARGET_OS_MAC)
++#if defined(MACOS) && !defined(TARGET_OS_MAC)
+ #  define OS_CODE  7
+ #  ifndef Z_SOLO
+ #    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
+ #      include <unix.h> /* for fdopen */
+-#    else
+-#      ifndef fdopen
+-#        define fdopen(fd,mode) NULL /* No fdopen() */
+-#      endif
+ #    endif
+ #  endif
+ #endif
+
+diff -ruN bergamot-org/3rd_party/marian-dev/src/3rd_party/CMakeLists.txt bergamot-patched/3rd_party/marian-dev/src/3rd_party/CMakeLists.txt
+--- bergamot-org/3rd_party/marian-dev/src/3rd_party/CMakeLists.txt	2023-07-08 17:36:56.190113017 +0200
++++ bergamot-patched/3rd_party/marian-dev/src/3rd_party/CMakeLists.txt	2026-01-18 00:00:00.000000000 +0900
+@@ -7,8 +7,12 @@
+ if(NOT USE_WASM_COMPATIBLE_SOURCE)
+   add_subdirectory(./SQLiteCpp)
+   add_subdirectory(./zlib)
+ 
+-  add_subdirectory(./faiss)
+-  include_directories(./faiss)
++  if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++    add_subdirectory(./faiss)
++    include_directories(./faiss)
++  else()
++    message(STATUS "Skipping faiss on non-x86 architecture: ${CMAKE_SYSTEM_PROCESSOR}")
++  endif()
+ endif()
+
+diff -ruN bergamot-org/3rd_party/marian-dev/src/CMakeLists.txt bergamot-patched/3rd_party/marian-dev/src/CMakeLists.txt
+--- bergamot-org/3rd_party/marian-dev/src/CMakeLists.txt	2023-07-08 17:36:56.190113017 +0200
++++ bergamot-patched/3rd_party/marian-dev/src/CMakeLists.txt	2026-01-18 00:00:00.000000000 +0900
+@@ -121,8 +121,12 @@
+ 
+     $<TARGET_OBJECTS:SQLiteCpp>
+     $<TARGET_OBJECTS:zlib>
+-    $<TARGET_OBJECTS:faiss>
+   )
++  if(TARGET faiss)
++    list(APPEND MARIAN_SOURCES
++      $<TARGET_OBJECTS:faiss>
++    )
++  endif()
+   if(USE_FBGEMM)
+     list(APPEND MARIAN_SOURCES
+       tensors/cpu/fbgemm/packed_gemm.cpp
+diff -ruN bergamot-org/3rd_party/marian-dev/src/graph/node_initializers.cpp bergamot-patched/3rd_party/marian-dev/src/graph/node_initializers.cpp
+--- bergamot-org/3rd_party/marian-dev/src/graph/node_initializers.cpp	2023-07-08 17:36:56.190113017 +0200
++++ bergamot-patched/3rd_party/marian-dev/src/graph/node_initializers.cpp	2026-01-18 00:00:00.000000000 +0900
+@@ -255,5 +255,5 @@
+ }  // namespace marian
+ 
+ 
+-#if BLAS_FOUND && !WASM_COMPATIBLE_SOURCE
++#if BLAS_FOUND && !WASM_COMPATIBLE_SOURCE && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86))
+ #include "faiss/VectorTransform.h"
+diff -ruN bergamot-org/3rd_party/marian-dev/src/layers/lsh.cpp bergamot-patched/3rd_party/marian-dev/src/layers/lsh.cpp
+--- bergamot-org/3rd_party/marian-dev/src/layers/lsh.cpp	2023-07-08 17:36:56.190113017 +0200
++++ bergamot-patched/3rd_party/marian-dev/src/layers/lsh.cpp	2026-01-18 00:00:00.000000000 +0900
+@@ -1,7 +1,8 @@
+ #include "layers/lsh.h"
+ #include "graph/expression_operators.h"
+ #include "tensors/cpu/prod_blas.h"
+ 
+-#include "faiss/IndexLSH.h"
++#if BLAS_FOUND && !WASM_COMPATIBLE_SOURCE && (defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86))
++#include "faiss/IndexLSH.h"
+ 
+ namespace marian {
+@@ -120,3 +121,26 @@
+ #endif
+ 
+ }  // namespace marian
++
++#else
++
++namespace marian {
++
++Expr LSH::apply(Expr, Expr, Expr) {
++  ABORT("LSH index (--output-approx-knn) is not supported on this architecture");
++  return nullptr;
++}
++
++Expr LSH::search(Expr, Expr) {
++  ABORT("LSH index (--output-approx-knn) is not supported on this architecture");
++  return nullptr;
++}
++
++Expr LSH::affine(Expr, Expr, Expr, Expr) {
++  ABORT("LSH index (--output-approx-knn) is not supported on this architecture");
++  return nullptr;
++}
++
++}  // namespace marian
++
++#endif

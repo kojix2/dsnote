@@ -49,6 +49,7 @@ class global_hotkeys_manager : public QObject {
     OrgFreedesktopPortalGlobalShortcutsInterface m_portal_inf;
     QDBusObjectPath m_portal_session;
     QMetaObject::Connection m_portal_activated_conn;
+    bool m_force_bind = false;
 #ifdef USE_X11_FEATURES
     struct x11_hotkeys_t {
 #define X(name, id, desc, key) QHotkey name;
@@ -56,7 +57,6 @@ class global_hotkeys_manager : public QObject {
 #undef X
     };
     x11_hotkeys_t m_x11_hotkeys;
-    bool m_force_bind = false;
 
     void enable_x11();
     void disable_x11();

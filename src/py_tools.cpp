@@ -357,9 +357,14 @@ libs_availability_t libs_availability(libs_scan_type_t scan_type,
     try {
         // release mem
         py::module_::import("gc").attr("collect")();
-        py::module_::import("torch").attr("cuda").attr("empty_cache")();
+        try {
+            auto torch = py::module_::import("torch");
+            torch.attr("cuda").attr("empty_cache")();
+        } catch (const std::exception& err) {
+            LOGD("py error: " << err.what());
+        }
     } catch (const std::exception& err) {
-        LOGE("py error: " << err.what());
+        LOGD("py error: " << err.what());
     }
 #endif
 

@@ -7,6 +7,47 @@
 
 #include "fake_keyboard.hpp"
 
+#if !defined(__linux__)
+
+#include <QClipboard>
+#include <QGuiApplication>
+
+fake_keyboard::fake_keyboard(QObject* parent) : QObject{parent} {}
+
+fake_keyboard::~fake_keyboard() = default;
+
+bool fake_keyboard::is_supported() {
+    return false;
+}
+
+bool fake_keyboard::is_xdo_supported() {
+    return false;
+}
+
+bool fake_keyboard::is_ydo_supported() {
+    return false;
+}
+
+bool fake_keyboard::is_legacy_supported() {
+    return false;
+}
+
+void fake_keyboard::send_text(const QString& text) {
+    Q_UNUSED(text)
+    emit text_sending_completed();
+}
+
+void fake_keyboard::send_ctrl_v() {}
+
+QString fake_keyboard::copy_to_clipboard(const QString& text) {
+    if (auto* clipboard = QGuiApplication::clipboard()) {
+        clipboard->setText(text);
+    }
+    return text;
+}
+
+#else
+
 // clang-format off
 #include "settings.h"
 // clang-format on
@@ -1104,3 +1145,5 @@ void fake_keyboard::wly_keyboard_modifiers(
 void fake_keyboard::wly_keyboard_repeat_info(
     [[maybe_unused]] void *data, [[maybe_unused]] wl_keyboard *wl_keyboard,
     [[maybe_unused]] int32_t rate, [[maybe_unused]] int32_t delay) {}
+
+#endif  // !defined(__linux__)

@@ -14,13 +14,19 @@ if(${libtool_bin} MATCHES "-NOTFOUND$")
    message(FATAL_ERROR "libtool not found but it is required to build espeak")
 endif()
 
+if(APPLE)
+    set(espeak_copy_command ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <BINARY_DIR>)
+else()
+    set(espeak_copy_command cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR>)
+endif()
+
 ExternalProject_Add(mbrola
     SOURCE_DIR ${external_dir}/mbrola
     BINARY_DIR ${PROJECT_BINARY_DIR}/external/mbrola
     INSTALL_DIR ${PROJECT_BINARY_DIR}/external
     URL ${mbrola_source_url}
     URL_HASH SHA256=${mbrola_checksum}
-    CONFIGURE_COMMAND cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR>
+    CONFIGURE_COMMAND ${espeak_copy_command}
     BUILD_COMMAND ${MAKE}
     BUILD_ALWAYS False
     INSTALL_COMMAND mkdir -p ${external_bin_dir} && cp <BINARY_DIR>/Bin/mbrola ${external_bin_dir}
@@ -32,7 +38,7 @@ ExternalProject_Add(espeak
     INSTALL_DIR ${PROJECT_BINARY_DIR}/external
     URL ${espeak_source_url}
     URL_HASH SHA256=${espeak_checksum}
-    CONFIGURE_COMMAND cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR> &&
+    CONFIGURE_COMMAND ${espeak_copy_command} &&
         <BINARY_DIR>/autogen.sh &&
         <BINARY_DIR>/configure --prefix=<INSTALL_DIR> --libdir=<INSTALL_DIR>/lib --with-pic
         --with-pcaudiolib=no --with-sonic=no --with-speechplayer=no

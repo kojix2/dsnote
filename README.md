@@ -6,18 +6,35 @@ Linux desktop and Sailfish OS app for note taking, reading and translating with 
 
 ## Contents of this README
 
-- [Description](#description)
-- [Languages and Models](#languages-and-models)
-- [How to install](#how-to-install)
-- [Flatpak packages](#flatpak-packages)
-- [Beta version](#beta-version)
-- [Extra features](#extra-features)
-- [Building from sources](#building-from-sources)
-- [How to enable a custom model](#how-to-enable-a-custom-model)
-- [Contributing to Speech Note](#contributing-to-speech-note)
-- [How to support](#how-to-support)
-- [Reviews and demos](#reviews-and-demos)
-- [License](#license)
+- [Speech Note](#speech-note)
+  - [Contents of this README](#contents-of-this-readme)
+  - [Description](#description)
+  - [Languages and Models](#languages-and-models)
+  - [How to install](#how-to-install)
+    - [Flatpak packages](#flatpak-packages)
+    - [Beta version](#beta-version)
+  - [Extra features](#extra-features)
+    - [Command-line options](#command-line-options)
+      - [Examples](#examples)
+    - [Global keyboard shortcuts](#global-keyboard-shortcuts)
+    - [Insert into active window](#insert-into-active-window)
+    - [Subtitles](#subtitles)
+  - [Building from sources](#building-from-sources)
+    - [Arch Linux](#arch-linux)
+    - [RHEL/Fedora/Rocky Linux](#rhelfedorarocky-linux)
+    - [Flatpak](#flatpak)
+    - [Sailfish OS](#sailfish-os)
+    - [Linux (direct build)](#linux-direct-build)
+    - [macOS (experimental)](#macos-experimental)
+    - [Minimal Linux (direct build)](#minimal-linux-direct-build)
+  - [Building WlClipboard](#building-wlclipboard)
+  - [How to enable a custom model](#how-to-enable-a-custom-model)
+  - [Contributing to Speech Note](#contributing-to-speech-note)
+    - [Translation](#translation)
+  - [How to support](#how-to-support)
+  - [Libraries](#libraries)
+  - [Reviews and demos](#reviews-and-demos)
+  - [License](#license)
 
 ## Description
 
@@ -417,6 +434,29 @@ make
 To make build without support for Python components, add `-DWITH_PY=OFF` in cmake step.
 
 To see other build options search for `option(BUILD_XXX)` in `CMakeList.txt` file.
+
+### macOS (experimental)
+
+This build is currently experimental and disables Linux-specific features (Wayland/X11, PulseAudio, april-asr). See [MACOS.md](MACOS.md) for details.
+
+Prerequisites (via Homebrew or equivalent): CMake, a C++17 compiler (Xcode Command Line Tools), Qt5, Python 3, pkg-config.
+
+```sh
+git clone <git repository url>
+
+cd dsnote
+mkdir build-macos
+cd build-macos
+
+cmake ../ -DCMAKE_BUILD_TYPE=Release -DWITH_DESKTOP=ON
+cmake --build . -- -j 1
+```
+
+Run:
+
+```sh
+./dsnote
+```
 
 ### Minimal Linux (direct build)
 

@@ -7,6 +7,17 @@
 
 #include "april_engine.hpp"
 
+#if !defined(HAVE_APRILASR)
+
+april_engine::april_engine(config_t config, callbacks_t call_backs)
+    : stt_engine{std::move(config), std::move(call_backs)} {}
+
+april_engine::~april_engine() = default;
+
+void april_engine::reset_impl() {}
+
+#else
+
 #include <dirent.h>
 #include <dlfcn.h>
 #include <stdio.h>
@@ -333,3 +344,5 @@ void april_engine::decode_speech(april_buf_t& buf, bool eof) {
         if (eof) m_result_prev_segment.clear();
     }
 }
+
+#endif  // !defined(HAVE_APRILASR)

@@ -8,9 +8,11 @@
 #ifndef AUDIO_DEVICE_MANAGER_HPP
 #define AUDIO_DEVICE_MANAGER_HPP
 
+#if defined(__linux__)
 #include <pulse/context.h>
 #include <pulse/introspect.h>
 #include <pulse/mainloop.h>
+#endif
 
 #include <functional>
 #include <mutex>
@@ -40,13 +42,14 @@ class audio_device_manager {
         const std::string &description);
 
    private:
-    pa_mainloop *m_pa_loop = nullptr;
-    pa_context *m_pa_ctx = nullptr;
     sources_changed_cb_t m_sources_changed_cb;
     std::thread m_thread;
     std::mutex m_mtx;
     bool m_sources_discovery_done = false;
     std::unordered_map<std::string, device_t> m_sources;
+#if defined(__linux__)
+    pa_mainloop *m_pa_loop = nullptr;
+    pa_context *m_pa_ctx = nullptr;
     void clean();
     void remove_source_by_index(unsigned int index);
     static void subscription_pa_callback(pa_context *ctx,
@@ -55,6 +58,7 @@ class audio_device_manager {
     static void source_info_pa_callback(pa_context *ctx,
                                         const pa_source_info *info, int eol,
                                         void *userdata);
+#endif
 };
 
 #endif  // AUDIO_DEVICE_MANAGER_HPP

@@ -397,7 +397,7 @@ void tts_engine::set_state(state_t new_state) {
 
 static decltype(timespec::tv_sec) create_date_sec(const std::string& file) {
     struct stat result{};
-    if (stat(file.c_str(), &result) == 0) return result.st_ctim.tv_sec;
+    if (stat(file.c_str(), &result) == 0) return result.st_ctime;
     return 0;
 }
 

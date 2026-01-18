@@ -28,6 +28,9 @@ install(FILES "${resources_dir}/beep-start-listen.wav" DESTINATION ${resources_i
 install(FILES "${resources_dir}/beep-end-listen.wav" DESTINATION ${resources_install_dir})
 
 function(check_patchelf)
+    if(APPLE)
+        return()
+    endif()
     if(${patchelf_bin} MATCHES "-NOTFOUND$")
         message(FATAL_ERROR "patchelf not found but it is required to install files")
     endif()

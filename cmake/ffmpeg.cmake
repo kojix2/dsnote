@@ -16,13 +16,19 @@ set(nasm_checksum "9182a118244b058651c576baa9d0366ee05983c4d4ae1d9ddd3236a9f2304
 set(opus_source_url "https://downloads.xiph.org/releases/opus/opus-1.4.tar.gz")
 set(opus_checksum "c9b32b4253be5ae63d1ff16eea06b94b5f0f2951b7a02aceef58e3a3ce49c51f")
 
+if(APPLE)
+    set(ffmpeg_copy_command ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <BINARY_DIR>)
+else()
+    set(ffmpeg_copy_command cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR>)
+endif()
+
 ExternalProject_Add(nasm
     SOURCE_DIR ${external_dir}/nasm
     BINARY_DIR ${PROJECT_BINARY_DIR}/external/nasm
     INSTALL_DIR ${PROJECT_BINARY_DIR}/external
     URL "${nasm_source_url}"
     URL_HASH SHA256=${nasm_checksum}
-    CONFIGURE_COMMAND cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR> &&
+    CONFIGURE_COMMAND ${ffmpeg_copy_command} &&
         <BINARY_DIR>/configure --prefix=<INSTALL_DIR>
     BUILD_COMMAND ${MAKE}
     BUILD_ALWAYS False
@@ -51,7 +57,7 @@ ExternalProject_Add(ogg
     INSTALL_DIR ${PROJECT_BINARY_DIR}/external
     URL "${ogg_source_url}"
     URL_HASH SHA256=${ogg_checksum}
-    CONFIGURE_COMMAND cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR> &&
+    CONFIGURE_COMMAND ${ffmpeg_copy_command} &&
         autoreconf -vfi &&
         <BINARY_DIR>/configure --prefix=<INSTALL_DIR>
             --bindir=<INSTALL_DIR>/bin --libdir=<INSTALL_DIR>/lib
@@ -67,6 +73,9 @@ ExternalProject_Add(vorbis
     INSTALL_DIR ${PROJECT_BINARY_DIR}/external
     URL "${vorbis_source_url}"
     URL_HASH SHA256=${vorbis_checksum}
+    PATCH_COMMAND patch --batch --unified -N -p1 --directory=<SOURCE_DIR>
+                -i ${patches_dir}/vorbis.patch ||
+                    echo "patch cmd failed, likely already patched"
     CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
         --bindir=<INSTALL_DIR>/bin --libdir=<INSTALL_DIR>/lib
         --enable-static=true --enable-shared=false
@@ -191,6 +200,14 @@ endif(arch_x8664)
 set(ffmpeg_extra_ldflags -L${external_lib_dir})
 set(ffmpeg_extra_libs "-lvorbis -logg -lm")
 
+set(ffmpeg_env
+    CPATH=${external_include_dir}
+    LIBRARY_PATH=${external_lib_dir}
+    PATH=${external_bin_dir}:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin
+    PKG_CONFIG_PATH=${external_lib_dir}/pkgconfig)
+
+set(ffmpeg_make ${CMAKE_MAKE_PROGRAM})
+
 ExternalProject_Add(ffmpeg
     SOURCE_DIR ${external_dir}/ffmpeg
     BINARY_DIR ${PROJECT_BINARY_DIR}/external/ffmpeg
@@ -201,19 +218,13 @@ ExternalProject_Add(ffmpeg
                 -i ${patches_dir}/ffmpeg.patch ||
                     echo "patch cmd failed, likely already patched"
     UPDATE_COMMAND ""
-    CONFIGURE_COMMAND CPATH=${external_include_dir}
-        LIBRARY_PATH=${external_lib_dir}
-        PATH=$ENV{PATH}:${external_bin_dir} PKG_CONFIG_PATH=${external_lib_dir}/pkgconfig
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${ffmpeg_env}
         <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> ${ffmpeg_opts}
         --extra-ldflags=${ffmpeg_extra_ldflags}
         --extra-libs=${ffmpeg_extra_libs}
-    BUILD_COMMAND CPATH=${external_include_dir}
-        LIBRARY_PATH=${external_lib_dir}
-        PATH=$ENV{PATH}:${external_bin_dir} ${MAKE}
+    BUILD_COMMAND ${CMAKE_COMMAND} -E env ${ffmpeg_env} ${ffmpeg_make}
     BUILD_ALWAYS False
-    INSTALL_COMMAND CPATH=${external_include_dir}
-        LIBRARY_PATH=${external_lib_dir}
-        PATH=$ENV{PATH}:${external_bin_dir} make DESTDIR=/ install
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E env ${ffmpeg_env} ${ffmpeg_make} DESTDIR=/ install
 )
 
 ExternalProject_Add_StepDependencies(ffmpeg configure nasm)

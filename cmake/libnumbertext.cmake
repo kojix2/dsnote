@@ -11,13 +11,19 @@ if(${libtool_bin} MATCHES "-NOTFOUND$")
    message(FATAL_ERROR "libtool not found but it is required to build libnumbertext")
 endif()
 
+if(APPLE)
+   set(libnumbertext_copy_command ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <BINARY_DIR>)
+else()
+   set(libnumbertext_copy_command cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR>)
+endif()
+
 ExternalProject_Add(libnumbertext
     SOURCE_DIR ${external_dir}/libnumbertext
     BINARY_DIR ${PROJECT_BINARY_DIR}/external/libnumbertext
     INSTALL_DIR ${PROJECT_BINARY_DIR}/external
     URL ${libnumbertext_source_url}
     URL_HASH SHA256=${libnumbertext_checksum}
-    CONFIGURE_COMMAND cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR> && autoreconf -i &&
+   CONFIGURE_COMMAND ${libnumbertext_copy_command} && autoreconf -i &&
         <BINARY_DIR>/configure --prefix=<INSTALL_DIR> --libdir=<INSTALL_DIR>/lib
         --enable-shared=false --enable-static=true --with-pic=yes
     BUILD_COMMAND ${MAKE}

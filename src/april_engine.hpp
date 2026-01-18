@@ -8,6 +8,8 @@
 #ifndef APRIL_ENGINE_H
 #define APRIL_ENGINE_H
 
+#if defined(HAVE_APRILASR)
+
 #include <april-asr/april_api.h>
 
 #include <memory>
@@ -53,5 +55,20 @@ class april_engine : public stt_engine {
     static void decode_handler(void* user_data, AprilResultType result_type,
                                size_t size, const AprilToken* token);
 };
+
+#else
+
+#include "stt_engine.hpp"
+
+class april_engine : public stt_engine {
+   public:
+    april_engine(config_t config, callbacks_t call_backs);
+    ~april_engine() override;
+
+   private:
+    void reset_impl() override;
+};
+
+#endif
 
 #endif  // APRIL_ENGINE_H

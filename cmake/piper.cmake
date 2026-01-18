@@ -11,6 +11,13 @@ set(onnx_x8664_checksum "53a0f03f71587ed602e99e82773132fc634b74c2d227316fbfd4bf6
 set(onnx_arm64_url "https://github.com/microsoft/onnxruntime/releases/download/v1.16.1/onnxruntime-linux-aarch64-1.16.1.tgz")
 set(onnx_arm64_checksum "f10851b62eb44f9e811134737e7c6edd15733d2c1549cb6ce403808e9c047385")
 
+if(APPLE)
+    set(onnx_x8664_url "https://github.com/microsoft/onnxruntime/releases/download/v1.16.1/onnxruntime-osx-x86_64-1.16.1.tgz")
+    set(onnx_x8664_checksum "0b8ae24401a8f75e1c4f75257d4eaeb1b6d44055e027df4aa4a84e67e0f9b9e3")
+    set(onnx_arm64_url "https://github.com/microsoft/onnxruntime/releases/download/v1.16.1/onnxruntime-osx-arm64-1.16.1.tgz")
+    set(onnx_arm64_checksum "56ca6b8de3a220ea606c2067ba65d11dfa6e4f722e01ac7dc75f7152b81445e0")
+endif()
+
 set(spdlog_source_url "https://github.com/gabime/spdlog/archive/76fb40d95455f249bd70824ecfcae7a8f0930fa3.zip")
 set(spdlog_checksum "9a00dd50318b9467148adc5e822e55221c65d8d8794c6890ba034eed222dcf64")
 
@@ -35,8 +42,8 @@ ExternalProject_Add(onnx
     BUILD_COMMAND ""
     BUILD_ALWAYS False
     INSTALL_COMMAND mkdir -p ${external_include_dir} && mkdir -p ${external_lib_dir} &&
-        cp -r --no-target-directory <SOURCE_DIR>/include ${external_include_dir} &&
-        cp -r --no-target-directory <SOURCE_DIR>/lib ${external_lib_dir}
+        ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${external_include_dir} &&
+        ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/lib ${external_lib_dir}
 )
 
 ExternalProject_Add(piperphonemize
@@ -87,8 +94,14 @@ ExternalProject_Add(piper
     BUILD_ALWAYS False
 )
 
+if(APPLE)
+    set(onnxruntime_lib ${external_lib_dir}/libonnxruntime.dylib)
+else()
+    set(onnxruntime_lib ${external_lib_dir}/libonnxruntime.so)
+endif()
+
 add_library(onnxruntime SHARED IMPORTED)
-set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION ${external_lib_dir}/libonnxruntime.so)
+set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION ${onnxruntime_lib})
 
 ExternalProject_Add_StepDependencies(piperphonemize configure onnx)
 ExternalProject_Add_StepDependencies(piperphonemize configure espeak)
@@ -101,5 +114,5 @@ list(APPEND deps_libs
     "${external_lib_dir}/libpiper_api.a"
     "${external_lib_dir}/libspdlog.a"
     "${external_lib_dir}/libpiper_phonemize.a"
-    "${external_lib_dir}/libonnxruntime.so")
+    "${onnxruntime_lib}")
 list(APPEND deps piper piperphonemize spdlog onnx)

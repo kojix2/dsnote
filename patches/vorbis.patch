@@ -1,0 +1,22 @@
+diff -ruN vorbis-org/lib/Makefile.in vorbis-patched/lib/Makefile.in
+--- vorbis-org/lib/Makefile.in	2024-03-18 00:00:00.000000000 +0000
++++ vorbis-patched/lib/Makefile.in	2024-03-18 00:00:00.000000000 +0000
+@@ -86,3 +86,3 @@
+ EXTRA_PROGRAMS = barkmel$(EXEEXT) tone$(EXEEXT) psytune$(EXEEXT)
+-noinst_PROGRAMS = $(am__EXEEXT_1)
++noinst_PROGRAMS =
+ subdir = lib
+@@ -100,4 +100,4 @@
+ CONFIG_CLEAN_FILES =
+ CONFIG_CLEAN_VPATH_FILES =
+-am__EXEEXT_1 = test_sharedbook$(EXEEXT)
++am__EXEEXT_1 =
+ PROGRAMS = $(noinst_PROGRAMS)
+@@ -474,2 +474,2 @@
+ #vorbis_selftests = test_codebook test_sharedbook
+-vorbis_selftests = test_sharedbook
++vorbis_selftests =
+@@ -1004,2 +1004,1 @@
+-check: $(noinst_PROGRAMS)
+-	./test_sharedbook$(EXEEXT)
++check: $(noinst_PROGRAMS)

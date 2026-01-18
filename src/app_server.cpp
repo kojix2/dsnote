@@ -23,6 +23,10 @@ app_server::app_server(const cmd::options &options, QObject *parent)
       m_dbus_application_adaptor{this},
       m_dbus_dsnote_adaptor{this} {
     auto con = QDBusConnection::sessionBus();
+    if (!con.isConnected()) {
+        qDebug() << "dbus session bus is not available; running without dbus";
+        return;
+    }
 
     if (con.registerService(DBUS_SERVICE_NAME) &&
         con.registerObject(DBUS_SERVICE_PATH, this)) {

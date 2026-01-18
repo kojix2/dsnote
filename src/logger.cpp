@@ -9,7 +9,12 @@
 
 #include <fmt/chrono.h>
 #include <fmt/core.h>
+#include <cstdint>
+#if defined(__APPLE__)
+#include <pthread.h>
+#else
 #include <threads.h>
+#endif
 
 #include <chrono>
 #include <cstdio>
@@ -94,6 +99,14 @@ inline static auto typeToChar(Logger::LogType type) {
     return '-';
 }
 
+inline static uint64_t currentThreadId() {
+#if defined(__APPLE__)
+    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pthread_self()));
+#else
+    return static_cast<uint64_t>(thrd_current());
+#endif
+}
+
 Logger::Message::~Message() {
     if (!match(m_type)) return;
 
@@ -113,7 +126,7 @@ Logger::Message::~Message() {
                     m_line > 0 ? ":{6} " : " ", str.back() == '\n' ? "" : "\n");
     try {
         auto line = fmt::format(fmt, typeToChar(m_type), now, msecs,
-                                thrd_current(), m_fun, str, m_line);
+                                currentThreadId(), m_fun, str, m_line);
         if (Logger::m_file) {
             *Logger::m_file << line;
             Logger::m_file->flush();

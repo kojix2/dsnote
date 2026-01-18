@@ -70,6 +70,10 @@ arch_t arch() {
 
 cpuinfo_t cpuinfo() {
     static auto cpuinfo = []() {
+#ifdef __APPLE__
+        LOGD("cpuinfo: skipping /proc/cpuinfo on macOS");
+        return cpuinfo_t{};
+#else
         std::ifstream cpuinfo_file{"/proc/cpuinfo"};
         if (!cpuinfo_file) {
             LOGE("can't open cpuinfo");
@@ -77,6 +81,7 @@ cpuinfo_t cpuinfo() {
         }
 
         return parse_cpuinfo(cpuinfo_file);
+#endif
     }();
 
     return cpuinfo;

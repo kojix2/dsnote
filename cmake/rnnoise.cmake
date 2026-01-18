@@ -23,13 +23,19 @@ set(rnnoise_cflags
     -Dcompute_dense=rnnoise_compute_dense \
     -fpie")
 
+if(APPLE)
+    set(rnnoise_copy_command ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <BINARY_DIR>)
+else()
+    set(rnnoise_copy_command cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR>)
+endif()
+
 ExternalProject_Add(rnnoise
     SOURCE_DIR ${external_dir}/rnnoise
     BINARY_DIR ${PROJECT_BINARY_DIR}/external/rnnoise
     INSTALL_DIR ${PROJECT_BINARY_DIR}/external
     URL "${rnnoise_source_url}"
     URL_MD5 "${rnnoise_checksum}"
-    CONFIGURE_COMMAND cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR> && <BINARY_DIR>/autogen.sh &&
+    CONFIGURE_COMMAND ${rnnoise_copy_command} && <BINARY_DIR>/autogen.sh &&
         <BINARY_DIR>/configure --prefix=<INSTALL_DIR> --libdir=<INSTALL_DIR>/lib
         --disable-examples --disable-doc --disable-shared --enable-static --with-pic
         CFLAGS=${rnnoise_cflags}

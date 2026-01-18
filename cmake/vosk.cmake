@@ -16,6 +16,12 @@ if(BUILD_VOSK)
        message(FATAL_ERROR "libtool not found but it is required to build vosk")
     endif()
 
+    if(APPLE)
+        set(openfst_copy_command ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <BINARY_DIR>)
+    else()
+        set(openfst_copy_command cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR>)
+    endif()
+
     ExternalProject_Add(openfst
         SOURCE_DIR ${external_dir}/openfst
         BINARY_DIR ${PROJECT_BINARY_DIR}/external/openfst
@@ -25,7 +31,7 @@ if(BUILD_VOSK)
         PATCH_COMMAND patch --batch --unified -p1 --directory=<SOURCE_DIR>
                     -i ${patches_dir}/openfst.patch ||
                         echo "patch cmd failed, likely already patched"
-        CONFIGURE_COMMAND cp -r --no-target-directory <SOURCE_DIR> <BINARY_DIR> && autoreconf -fi &&
+        CONFIGURE_COMMAND ${openfst_copy_command} && autoreconf -fi &&
             <BINARY_DIR>/configure --prefix=<INSTALL_DIR> --libdir=<INSTALL_DIR>/lib
             --disable-bin --disable-dependency-tracking --enable-compact-fsts --enable-compress
             --enable-const-fsts --enable-far --enable-linear-fsts --enable-lookahead-fsts
